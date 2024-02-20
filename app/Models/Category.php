@@ -16,4 +16,19 @@ class Category extends Model
         'is_visible',
         'description',
     ];
+
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function child()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class);
+    }
 }

@@ -18,4 +18,14 @@ class Order extends Model
         'shipping_price',
         'notes',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 }

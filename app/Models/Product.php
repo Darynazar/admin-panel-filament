@@ -14,6 +14,7 @@ class Product extends Model
         'name',
         'slug',
         'sku',
+        'image',
         'description',
         'quantity',
         'price',
@@ -22,4 +23,14 @@ class Product extends Model
         'type',
         'publish_at',
     ];
+
+    public function brands()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class);
+    }
 }
