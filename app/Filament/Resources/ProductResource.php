@@ -2,11 +2,23 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\ProductTypeEnum;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class ProductResource extends Resource
@@ -23,7 +35,52 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Group::make()
+                    ->schema([
+                        Section::make()
+                            ->schema([
+                                TextInput::make('name'),
+                                TextInput::make('slug'),
+                                MarkdownEditor::make('description')
+                                    ->columnSpan('full'),
+                            ])->columns(2),
+
+                        Section::make('Pricing & Inventory')
+                            ->schema([
+                                TextInput::make('sku'),
+                                TextInput::make('price')
+                                    ->numeric(),
+                                TextInput::make('quantity')
+                                    ->numeric(),
+                                Select::make('type')
+                                    ->options([
+                                        'downloadable' => ProductTypeEnum::DOWNLOADABLE->value,
+                                        'deliverable' => ProductTypeEnum::DELIVERABLE->value,
+                                    ]),
+                            ])->columns(2),
+                    ]),
+
+                Group::make()
+                    ->schema([
+                        Section::make('Status')
+                            ->schema([
+                                Toggle::make('is_visible'),
+                                Toggle::make('is_featured'),
+                                DatePicker::make('publish_at'),
+                            ]),
+
+                        Section::make('Image')
+                            ->schema([
+                                FileUpload::make('image'),
+                            ])->collapsible(),
+
+                        Section::make('Association')
+                            ->schema([
+                                Select::make('brand_id')
+                                    ->relationship('brand', 'name'),
+                            ]),
+                    ]),
+
             ]);
     }
 
@@ -31,14 +88,16 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image'),
-                Tables\Columns\TextColumn::make('name'),
-                Tables\Columns\TextColumn::make('brand.name'),
-                Tables\Columns\TextColumn::make('is_visibale'),
-                Tables\Columns\TextColumn::make('price'),
-                Tables\Columns\TextColumn::make('quantity'),
-                Tables\Columns\TextColumn::make('publishd_at'),
-                Tables\Columns\TextColumn::make('type'),
+                ImageColumn::make('image'),
+                TextColumn::make('name'),
+                TextColumn::make('brand.name'),
+                IconColumn::make('is_visible')->boolean(),
+                TextColumn::make('price')
+                    ->numeric(),
+                TextColumn::make('quantity')
+                    ->numeric(),
+                TextColumn::make('publish_at'),
+                TextColumn::make('type'),
             ])
             ->filters([
                 //
