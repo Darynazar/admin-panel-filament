@@ -14,12 +14,14 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -39,24 +41,45 @@ class ProductResource extends Resource
                     ->schema([
                         Section::make()
                             ->schema([
-                                TextInput::make('name'),
-                                TextInput::make('slug'),
+                                TextInput::make('name')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->unique()
+                                    ->afterStateUpdated(function (string $operation, $state, Set $set) {
+                                        if ($operation !== 'create') {
+                                            return;
+                                        }
+
+                                        $set('slug', Str::slug($state));
+                                    }),
+                                TextInput::make('slug')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->required()
+                                    ->unique(Product::class, 'slug', ignoreRecord: true),
                                 MarkdownEditor::make('description')
                                     ->columnSpan('full'),
                             ])->columns(2),
 
                         Section::make('Pricing & Inventory')
                             ->schema([
-                                TextInput::make('sku'),
+                                TextInput::make('sku')
+                                    ->label('SKU(Stock Keeping Unit)')
+                                    ->unique()
+                                    ->required(),
                                 TextInput::make('price')
-                                    ->numeric(),
+                                    ->numeric()
+                                    ->rules(['regex:'])
+                                    ->required(),
                                 TextInput::make('quantity')
-                                    ->numeric(),
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(180),
                                 Select::make('type')
                                     ->options([
                                         'downloadable' => ProductTypeEnum::DOWNLOADABLE->value,
                                         'deliverable' => ProductTypeEnum::DELIVERABLE->value,
-                                    ]),
+                                    ])->required(),
                             ])->columns(2),
                     ]),
 
@@ -64,14 +87,25 @@ class ProductResource extends Resource
                     ->schema([
                         Section::make('Status')
                             ->schema([
-                                Toggle::make('is_visible'),
-                                Toggle::make('is_featured'),
-                                DatePicker::make('publish_at'),
+                                Toggle::make('is_visible')
+                                    ->label('Visibility')
+                                    ->helperText('Enable or disable product visibility')
+                                    ->default(true),
+                                Toggle::make('is_featured')
+                                    ->label('Featured')
+                                    ->helperText('Enable or disable product featured'),
+                                DatePicker::make('publish_at')
+                                    ->label('Availibity')
+                                    ->default(now()),
                             ]),
 
                         Section::make('Image')
                             ->schema([
-                                FileUpload::make('image'),
+                                FileUpload::make('image')
+                                    ->directory('form-attachment')
+                                    ->preserveFilenames()
+                                    ->image()
+                                    ->imageEditor(),
                             ])->collapsible(),
 
                         Section::make('Association')
