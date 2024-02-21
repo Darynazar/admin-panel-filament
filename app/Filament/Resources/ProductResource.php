@@ -20,6 +20,8 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
@@ -69,7 +71,7 @@ class ProductResource extends Resource
                                     ->required(),
                                 TextInput::make('price')
                                     ->numeric()
-                                    ->rules(['regex:'])
+                                    // ->rules(['regex:'])
                                     ->required(),
                                 TextInput::make('quantity')
                                     ->numeric()
@@ -123,18 +125,39 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('image'),
-                TextColumn::make('name'),
-                TextColumn::make('brand.name'),
-                IconColumn::make('is_visible')->boolean(),
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('brand.name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Visibility')
+                    ->toggleable(),
+                IconColumn::make('is_visible')
+                    ->searchable()
+                    ->toggleable()
+                    ->boolean(),
                 TextColumn::make('price')
+                    ->sortable()
+                    ->toggleable()
                     ->numeric(),
                 TextColumn::make('quantity')
-                    ->numeric(),
-                TextColumn::make('publish_at'),
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('publish_at')
+                    ->sortable()
+                    ->date(),
                 TextColumn::make('type'),
             ])
             ->filters([
-                //
+                TernaryFilter::make('is_visible')
+                    ->boolean()
+                    ->trueLabel('Only Visible Product')
+                    ->falseLabel('Only Hidden Product')
+                    ->native(false),
+
+                SelectFilter::make('brand')
+                    ->relationship('brand', 'name'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
